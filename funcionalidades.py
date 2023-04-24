@@ -258,17 +258,25 @@ class Funcs():
         self.desconecta_bd()
 
     def get_crypto_price(self):
-        c = CurrencyRates()
         exchange = ccxt.binance()
-        exchange_rate = c.get_rate('BRL', 'USD')
+        if datetime.date.today().strftime('%A') != 'Sunday':
+            c = CurrencyRates()
+            exchange_rate = c.get_rate('BRL', 'USD')
 
-        bitcoin_price_usd = exchange.fetch_ticker('BTC/USDT')['last']
-        bitcoin_price_brl = bitcoin_price_usd / exchange_rate
+            bitcoin_price_usd = exchange.fetch_ticker('BTC/USDT')['last']
+            bitcoin_price_brl = bitcoin_price_usd / exchange_rate
 
-        ethereum_price_usd = exchange.fetch_ticker('ETH/USDT')['last']
-        ethereum_price_brl = ethereum_price_usd / exchange_rate
+            ethereum_price_usd = exchange.fetch_ticker('ETH/USDT')['last']
+            ethereum_price_brl = ethereum_price_usd / exchange_rate
 
-        self.crypto_price.delete('1.0', 'end')
-        self.crypto_price.insert('1.1',
-                                 f'     BITCOIN PRICE: R${bitcoin_price_brl:,.2f}         ETHEREUM PRICE: R${ethereum_price_brl:,.2f}')
-        self.root.after(20000, self.get_crypto_price)
+            self.crypto_price.delete('1.0', 'end')
+            self.crypto_price.insert('1.1',
+                                     f'     BITCOIN PRICE: R${bitcoin_price_brl:,.2f}         ETHEREUM PRICE: R${ethereum_price_brl:,.2f}')
+            self.root.after(60000, self.get_crypto_price)
+        else:
+            bitcoin_price_usd = exchange.fetch_ticker('BTC/USDT')['last']
+            ethereum_price_usd = exchange.fetch_ticker('ETH/USDT')['last']
+            self.crypto_price.delete('1.0', 'end')
+            self.crypto_price.insert('1.1',
+                                     f'     BITCOIN PRICE: US${bitcoin_price_usd:,.2f}       ETHEREUM PRICE: US${ethereum_price_usd:,.2f}')
+            self.root.after(60000, self.get_crypto_price)

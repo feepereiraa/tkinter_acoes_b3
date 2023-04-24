@@ -14,7 +14,7 @@ class Application(Funcs):
         self.select_lista()
         self.get_crypto_price()
 
-        self.root.after(20000, self.get_crypto_price)
+        self.root.after(60000, self.get_crypto_price)
 
         root.mainloop()
 
