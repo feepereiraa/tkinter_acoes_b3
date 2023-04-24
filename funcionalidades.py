@@ -122,28 +122,25 @@ class Funcs():
             self.lista_tickers.insert("", END, values=i)
         self.desconecta_bd()
 
-    def limpa_lista_tickers(self):
+    def limpa_lista_tickers(self, x=True):
         self.limpar_bd()
         self.lista_tickers.delete(*self.lista_tickers.get_children())
+        if x == True:
+            self.limpa_tela()
 
     # FUNCOES DE DF
     def joel_greenblat(self, df, restricao_liquidez=False):
-        # Cria a coluna de pontuacao baseada na formula magica de Joel Greenblat
         df_JG = df.copy()
         df_JG = df_JG[(df_JG['P/L'] > 0) & (df_JG['EV/EBIT'] > 0) & (df_JG['ROIC'] > 10)]
         if restricao_liquidez == True:
             df_JG = df_JG[df_JG[' LIQUIDEZ MEDIA DIARIA'] > df_JG[' LIQUIDEZ MEDIA DIARIA'].quantile(0.25)]
         df_JG['Joel_Greenblat'] = df_JG['Rank_ROIC'] + df_JG['Rank_EV/EBIT']
 
-        # Separa as colunas e ordena os valores de acordo com o ranking da formula magica
         df_JG = df_JG.sort_values('Joel_Greenblat', ascending=False)
 
-        # Remove tickers da mesma empresa
         df_JG['EMPRESA'] = df_JG['TICKER'].str[:4]
         df_JG.drop_duplicates(subset=['EMPRESA'], inplace=True, keep='first')
         df_JG.drop('EMPRESA', axis=1, inplace=True)
-        # df_JG.reset_index(inplace=True, drop=True)
-        # df_JG.drop('index', axis=1, inplace=True)
         return df_JG
 
     def read_clean_statusinvest_dataset(self, nan_off=True):
@@ -156,7 +153,6 @@ class Funcs():
         df = self.transform_brazil_to_us_dataframe(df)
         colunas_com_excecao = [coluna for coluna in df.columns if coluna != 'TICKER']
         df[colunas_com_excecao] = df[colunas_com_excecao].astype('float')
-        # df.set_index('TICKER', inplace=True)
         df.reset_index(inplace=True, drop=True)
         return df
 
@@ -188,34 +184,14 @@ class Funcs():
         return df
 
     # FUNCOES DE INSERÇÃO
-    def inserir_df(self):
-        self.limpa_lista_tickers()
-        self.obtem_restr()
-        df = self.read_clean_statusinvest_dataset()
-        df.rename(columns={'P/L': 'PL'}, inplace=True)
-        df = df[['TICKER', 'PRECO', 'PL', 'DY', 'ROIC']]
-
-        self.conecta_bd()
-        # for index, row in df.iterrows():
-        #    self.cursor.execute("""INSERT INTO tickers (TICKER, PRECO, PL, ROIC, DY) VALUES (?, ?, ?, ?, ?)""",
-        #              (row['TICKER'], row['PRECO'], row['PL'], row['ROIC'], row['DY']))
-
-        df.to_sql('tickers', self.conn, if_exists='replace')
-        self.desconecta_bd()
-        self.select_lista()
-        self.limpa_tela()
-
     def inserir_magic_formula(self):
-        self.limpa_lista_tickers()
+        self.limpa_lista_tickers(x=False)
         self.obtem_restr()
         df = self.joel_greenblat(self.create_ranks(self.read_clean_statusinvest_dataset()),
                                  restricao_liquidez=self.rest17)
         df.rename(columns={'P/L': 'PL'}, inplace=True)
         df = df[['TICKER', 'PRECO', 'PL', 'DY', 'ROIC']]
         self.conecta_bd()
-        # for index, row in df.iterrows():
-        #    self.cursor.execute("""INSERT INTO tickers (TICKER, PRECO, PL, ROIC, DY) VALUES (?, ?, ?, ?, ?)""",
-        #              (row['TICKER'], row['PRECO'], row['PL'], row['ROIC'], row['DY']))
         df.to_sql('tickers', self.conn, if_exists='replace')
         self.desconecta_bd()
         self.select_lista()
@@ -223,7 +199,7 @@ class Funcs():
         messagebox.showinfo("Concluído", "Este é o ranking de ações da Fórmula Mágica (ROIC e EV/Ebit).")
 
     def inserir_com_restricoes(self):
-        self.limpa_lista_tickers()
+        self.limpa_lista_tickers(x=False)
         self.obtem_restr()
         df = self.df_restrictions(self.read_clean_statusinvest_dataset(), pl_min=self.rest1, pl_max=self.rest2,
                                   evebit_min=self.rest3,
@@ -236,9 +212,6 @@ class Funcs():
         df.rename(columns={'P/L': 'PL'}, inplace=True)
         df = df[['TICKER', 'PRECO', 'PL', 'DY', 'ROIC']]
         self.conecta_bd()
-        # for index, row in df.iterrows():
-        #    self.cursor.execute("""INSERT INTO tickers (TICKER, PRECO, PL, ROIC, DY) VALUES (?, ?, ?, ?, ?)""",
-        #              (row['TICKER'], row['PRECO'], row['PL'], row['ROIC'], row['DY']))
         df.to_sql('tickers', self.conn, if_exists='replace')
         self.desconecta_bd()
         self.select_lista()
