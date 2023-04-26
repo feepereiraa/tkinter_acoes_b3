@@ -20,7 +20,7 @@ class Application(Funcs):
 
 
     def tela(self):
-        self.root.title("Tobirama")
+        self.root.title("Application")
         self.root.configure(background='deepskyblue')
         self.root.geometry()
         self.root.geometry("1100x650")
